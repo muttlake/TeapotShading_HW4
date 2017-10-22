@@ -1,7 +1,7 @@
 // 
 //  Timothy Shepard
-//  HW3
-//  Teapot Transformations
+//  HW4
+//  Teapot Lighting
 //
 
 #include <Windows.h>
@@ -9,6 +9,7 @@
 #include <GL/freeglut.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <stdio.h>
 #include <iostream>
 #include <string>
@@ -356,6 +357,11 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 	glutPostRedisplay(); //request display() call ASAP
 }
 
+struct Light {
+	glm::vec3 direction;
+	glm::vec3 color;
+};
+
 int main(int argc, char** argv) {
 
 	// Get vertices from Tris.txt file
@@ -385,12 +391,16 @@ int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(700, 700);
-	glutCreateWindow("Timothy_Shepard_HW3.zip");
+	glutCreateWindow("Timothy_Shepard_HW4.zip");
 	glutReshapeFunc(changeViewport);
 	glutDisplayFunc(render);
 	glewInit();  //glewInit() for Windows only
 	std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << endl;
 	std::cout << "GL Shading Language Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << "\n\n";
+
+	//Directional Lights
+
+
 
 	// Make a shader
 	char* vertexShaderSourceCode = readFile("vertexShader.vsh");
@@ -407,7 +417,8 @@ int main(int argc, char** argv) {
 
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec3) + NUM_VERTICES * sizeof(glm::vec4);
+	//GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec3) + NUM_VERTICES * sizeof(glm::vec4);
+	GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec3) +  NUM_VERTICES * sizeof(glm::vec4);
 	glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_STATIC_DRAW); //Create buffer
 	glBufferSubData(GL_ARRAY_BUFFER, 0, NUM_VERTICES * sizeof(glm::vec3), vpositions);  // Put data in buffer
 	glBufferSubData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec3), NUM_VERTICES * sizeof(glm::vec4), vcolors);
@@ -432,6 +443,27 @@ int main(int argc, char** argv) {
 
 	GLuint MatrixID = glGetUniformLocation(shaderProgramID, "MVP");
 	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+
+	glm::vec3 light1direction = glm::vec3(0.0f, -1.0f, 0.0f);
+	glm::vec3 light1color = glm::vec3(1.0f, 0.1f, 0.1f);
+	GLuint light1d = glGetUniformLocation(shaderProgramID, "light1direction");
+	glUniform3fv(light1d, 1, glm::value_ptr(light1direction));	
+	GLuint light1c = glGetUniformLocation(shaderProgramID, "light1color");
+	glUniform3fv(light1c, 1, glm::value_ptr(light1color));
+	
+	glm::vec3 light2direction = glm::vec3(-1.0f, 0.0f, 0.0f);
+	glm::vec3 light2color = glm::vec3(0.1f, 1.0f, 0.1f);
+	GLuint light2d = glGetUniformLocation(shaderProgramID, "light2direction");
+	glUniform3fv(light2d, 1, glm::value_ptr(light2direction));
+	GLuint light2c = glGetUniformLocation(shaderProgramID, "light2color");
+	glUniform3fv(light2c, 1, glm::value_ptr(light2color));
+
+	glm::vec3 light3direction = glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 light3color = glm::vec3(0.1f, 0.1f, 1.0f);
+	GLuint light3d = glGetUniformLocation(shaderProgramID, "light3direction");
+	glUniform3fv(light3d, 1, glm::value_ptr(light3direction));
+	GLuint light3c = glGetUniformLocation(shaderProgramID, "light3color");
+	glUniform3fv(light3c, 1, glm::value_ptr(light3color));
 
 	glutKeyboardFunc(switchMVP);
 

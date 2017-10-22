@@ -33,8 +33,5 @@
     <Text Include="Tris1.txt">
       <Filter>Source Files</Filter>
     </Text>
-    <Text Include="Tris.txt">
-      <Filter>Source Files</Filter>
-    </Text>
   </ItemGroup>
 </Project>

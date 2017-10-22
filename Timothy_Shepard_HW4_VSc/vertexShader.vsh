@@ -1,6 +1,7 @@
 #version 450
 
 in vec4 s_vPosition;
+in vec4 s_vNormal;
 
 //uniform mat4 mM;  // Model Matrix or Global Coordinate System Matrix
 //uniform mat4 mV;  // Camera Matrix
