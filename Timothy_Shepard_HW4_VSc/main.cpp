@@ -294,13 +294,18 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 {
 	GLuint MVPID = glGetUniformLocation(shaderProgramID, "MVP");
 	GLuint MVID = glGetUniformLocation(shaderProgramID, "MV");
+	GLuint MID = glGetUniformLocation(shaderProgramID, "M");
+	GLuint VID = glGetUniformLocation(shaderProgramID, "V");
 	
+	GLuint EYE = glGetUniformLocation(shaderProgramID, "eyePosition");
 
 	glm::mat4 M = glm::mat4(1.0f);
 	glm::mat4 P = glm::mat4(1.0f);
 	glm::mat4 V = glm::mat4(1.0f);
 	glm::mat4 MV = V*M;
 	glm::mat4 MVP = P*V*M;
+	glm::vec3 eyePosition = glm::vec3(1.0f);
+
 
 	switch (key) {
 	case '1':
@@ -308,6 +313,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		P = glm::ortho(-2.4f, 2.4f, -1.8f, 1.8f, 1.0f, 50.0f);
 		V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		eyePosition = glm::vec3(10.0f, 10.0f, 10.0f);
 		MV = V*M; 
 		MVP = P*V*M;
 		break;
@@ -318,6 +324,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
 		P = glm::perspective(glm::radians(50.0f), 4.0f / 3.0f, 1.0f, 50.0f);
 		V = glm::lookAt(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		eyePosition = glm::vec3(3.0f, 3.0f, 3.0f);
 		MV = V*M; 
 		MVP = P*V*M;
 		break;
@@ -327,6 +334,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		P = glm::ortho(-2.4f, 2.4f, -1.8f, 1.8f, 1.0f, 50.0f);
 		V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		eyePosition = glm::vec3(10.0f, 10.0f, 10.0f);
 		MV = V*M; 
 		MVP = P*V*M;
 		break;
@@ -337,7 +345,38 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
 		P = glm::perspective(glm::radians(50.0f), 4.0f / 3.0f, 1.0f, 50.0f);
 		V = glm::lookAt(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		MV = V*M; 
+		eyePosition = glm::vec3(3.0f, 3.0f, 3.0f);
+		MV = V*M;
+		MVP = P*V*M;
+		break;
+
+	case '5':
+		//#5 Model Transformation, Perspective Projection, Camera Transformation, Same as #2
+		//#1 Orthographic Projection, Camera Transformation
+		P = glm::ortho(-8.0f, 8.0f, -6.0f, 6.0f, 1.0f, 100.0f);
+		V = glm::lookAt(glm::vec3(10.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		eyePosition = glm::vec3(10.0f, 0.0f, 0.0f);
+		MV = V*M;
+		MVP = P*V*M;
+		break;
+
+	case '6':
+		//#5 Model Transformation, Perspective Projection, Camera Transformation, Same as #2
+		//#1 Orthographic Projection, Camera Transformation
+		P = glm::ortho(-8.0f, 8.0f, -6.0f, 6.0f, 1.0f, 100.0f);
+		V = glm::lookAt(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		eyePosition = glm::vec3(0.0f, 10.0f, 0.0f);
+		MV = V*M;
+		MVP = P*V*M;
+		break;
+
+	case '7':
+		//#5 Model Transformation, Perspective Projection, Camera Transformation, Same as #2
+		//#1 Orthographic Projection, Camera Transformation
+		P = glm::ortho(-8.0f, 8.0f, -6.0f, 6.0f, 1.0f, 100.0f);
+		V = glm::lookAt(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		eyePosition = glm::vec3(0.0f, 0.0f, 10.0f);
+		MV = V*M;
 		MVP = P*V*M;
 		break;
 
@@ -349,13 +388,12 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 
 	glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);
 	glUniformMatrix4fv(MVID, 1, GL_FALSE, &MV[0][0]);
+	glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
+	glUniformMatrix4fv(VID, 1, GL_FALSE, &V[0][0]);
+	glUniform3fv(EYE, 1, glm::value_ptr(eyePosition));
+
 	glutPostRedisplay(); //request display() call ASAP
 }
-
-//struct Light {
-//	glm::vec3 direction;
-//	glm::vec3 color;
-//};
 
 int main(int argc, char** argv) {
 
@@ -440,28 +478,38 @@ int main(int argc, char** argv) {
 	glm::mat4 MV = V*M;
 	glm::mat4 MVP = P*V*M;
 
+	glm::vec3 eyePosition = glm::vec3(10.0f, 10.0f, 10.0f);
+	GLuint EYE = glGetUniformLocation(shaderProgramID, "eyePosition");
+	glUniform3fv(EYE, 1, glm::value_ptr(eyePosition));
+
 	GLuint MVPID = glGetUniformLocation(shaderProgramID, "MVP");
 	glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);	
 	
 	GLuint MVID = glGetUniformLocation(shaderProgramID, "MV");
 	glUniformMatrix4fv(MVID, 1, GL_FALSE, &MV[0][0]);
 
+	GLuint MID = glGetUniformLocation(shaderProgramID, "M");
+	glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
+
+	GLuint VID = glGetUniformLocation(shaderProgramID, "V");
+	glUniformMatrix4fv(VID, 1, GL_FALSE, &V[0][0]);
+
 	//Directional Lights
-	glm::vec3 light1direction = glm::vec3(0.0f, -1.0f, 0.0f);
+	glm::vec3 light1direction = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::vec3 light1color = glm::vec3(1.0f, 0.1f, 0.1f);
 	GLuint light1d = glGetUniformLocation(shaderProgramID, "light1direction");
 	glUniform3fv(light1d, 1, glm::value_ptr(light1direction));	
 	GLuint light1c = glGetUniformLocation(shaderProgramID, "light1color");
 	glUniform3fv(light1c, 1, glm::value_ptr(light1color));
 	
-	glm::vec3 light2direction = glm::vec3(-1.0f, 0.0f, 0.0f);
+	glm::vec3 light2direction = glm::vec3(1.0f, 0.0f, 0.0f);
 	glm::vec3 light2color = glm::vec3(0.1f, 1.0f, 0.1f);
 	GLuint light2d = glGetUniformLocation(shaderProgramID, "light2direction");
 	glUniform3fv(light2d, 1, glm::value_ptr(light2direction));
 	GLuint light2c = glGetUniformLocation(shaderProgramID, "light2color");
 	glUniform3fv(light2c, 1, glm::value_ptr(light2color));
 
-	glm::vec3 light3direction = glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 light3direction = glm::vec3(0.0f, 0.0f, 1.0f);
 	glm::vec3 light3color = glm::vec3(0.1f, 0.1f, 1.0f);
 	GLuint light3d = glGetUniformLocation(shaderProgramID, "light3direction");
 	glUniform3fv(light3d, 1, glm::value_ptr(light3direction));
