@@ -20,12 +20,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fragmentShader.fsh">
-      <Filter>Source Files</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <FxCompile Include="vertexShader.vsh">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="fragmentShader.vsh">
       <Filter>Source Files</Filter>
     </FxCompile>
   </ItemGroup>

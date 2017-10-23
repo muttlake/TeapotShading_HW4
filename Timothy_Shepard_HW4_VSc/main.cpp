@@ -25,7 +25,7 @@ const int NUM_INDICES = 2688;
 GLuint shaderProgramID;
 GLuint vao = 0;
 GLuint vbo;
-GLuint positionID, colorID;
+GLuint positionID, colorID, normalID;
 GLuint indexBufferID;
 
 struct Vertex {
@@ -168,22 +168,22 @@ void printAllVertices(Vertex* allVertices, int numTriangles)
 	}
 }
 
-glm::vec3* buildPositionsVec3s(Vertex* allVertices, int numVertices)
+glm::vec4* buildPositionsVec4s(Vertex* allVertices, int numVertices)
 {
-	glm::vec3* allPositions;
-	allPositions = new glm::vec3[numVertices];
+	glm::vec4* allPositions;
+	allPositions = new glm::vec4[numVertices];
 	for (int i = 0; i < numVertices; i++)
 	{
 		Vertex v;
 		v = allVertices[i];
-		allPositions[i] = glm::vec3(v.x, v.y, v.z);
+		allPositions[i] = glm::vec4(v.x, v.y, v.z, 1.0f);
 	}
 	return allPositions;
 }
 
-void printAllPositions(glm::vec3* allPositions, int numVertices)
+void printAllPositions(glm::vec4* allPositions, int numVertices)
 {
-	std::cout << "Printing all position vec3:\n";
+	std::cout << "Printing all position vec4:\n";
 	for (int i = 0; i < numVertices; i++)
 	{
 		if (i % 3 == 0)
@@ -192,26 +192,26 @@ void printAllPositions(glm::vec3* allPositions, int numVertices)
 		}
 		std::cout << "Position For Vertex " << i << ": ";
 		std::cout << allPositions[i][0] << " " << allPositions[i][1];
-		std::cout << " " << allPositions[i][2] << endl;
+		std::cout << " " << allPositions[i][2] << " " << allPositions[i][3] << endl;
 	}
 }
 
-glm::vec3* buildNormalsVec3s(Vertex* allVertices, int numVertices)
+glm::vec4* buildNormalsVec4s(Vertex* allVertices, int numVertices)
 {
-	glm::vec3* allNormals;
-	allNormals = new glm::vec3[numVertices];
+	glm::vec4* allNormals;
+	allNormals = new glm::vec4[numVertices];
 	for (int i = 0; i < numVertices; i++)
 	{
 		Vertex v;
 		v = allVertices[i];
-		allNormals[i] = glm::vec3(v.nx, v.ny, v.nz);
+		allNormals[i] = glm::vec4(v.nx, v.ny, v.nz, 1.0f);
 	}
 	return allNormals;
 }
 
-void printAllNormals(glm::vec3* allNormals, int numVertices)
+void printAllNormals(glm::vec4* allNormals, int numVertices)
 {
-	std::cout << "Printing all normals vec3:\n";
+	std::cout << "Printing all normals vec4:\n";
 	for (int i = 0; i < numVertices; i++)
 	{
 		if (i % 3 == 0)
@@ -220,7 +220,7 @@ void printAllNormals(glm::vec3* allNormals, int numVertices)
 		}
 		std::cout << "Normal For Vertex " << i << ": ";
 		std::cout << allNormals[i][0] << " " << allNormals[i][1];
-		std::cout << " " << allNormals[i][2] << endl;
+		std::cout << " " << allNormals[i][2] << " " << allNormals[i][3] << endl;
 	}
 }
 
@@ -292,58 +292,52 @@ void render() {
 
 void switchMVP(unsigned char key, int xmouse, int ymouse)
 {
-	GLuint MatrixID = glGetUniformLocation(shaderProgramID, "MVP");
+	GLuint MVPID = glGetUniformLocation(shaderProgramID, "MVP");
+	GLuint MVID = glGetUniformLocation(shaderProgramID, "MV");
+	
 
 	glm::mat4 M = glm::mat4(1.0f);
 	glm::mat4 P = glm::mat4(1.0f);
 	glm::mat4 V = glm::mat4(1.0f);
+	glm::mat4 MV = V*M;
 	glm::mat4 MVP = P*V*M;
 
 	switch (key) {
 	case '1':
-		//#1 Orthographic Projection, Camera Transformation
-		P = glm::ortho(-8.0f, 8.0f, -6.0f, 6.0f, 1.0f, 100.0f);
-		V = glm::lookAt(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		//#1 Model Transformation, Orthographic Projection, Camera Transformation
+		M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+		P = glm::ortho(-2.4f, 2.4f, -1.8f, 1.8f, 1.0f, 50.0f);
+		V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		MV = V*M; 
 		MVP = P*V*M;
 		break;
 
 	case '2':
-		//#2 Orthographic Projection, Camera Transformation
-		P = glm::ortho(-4.0f, 4.0f, -3.0f, 3.0f, 1.0f, 100.0f);
-		V = glm::lookAt(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 2.0f));
+		//#2 Model Transformation, Perspective Projection, Camera Transformation
+		M = glm::rotate(M, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
+		P = glm::perspective(glm::radians(50.0f), 4.0f / 3.0f, 1.0f, 50.0f);
+		V = glm::lookAt(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		MV = V*M; 
 		MVP = P*V*M;
 		break;
 
 	case '3':
-		//New #3 Model Transformation, Orthographic Projection, Camera Transformation
+		//#3 Model Transformation, Orthographic Projection, Camera Transformation, Same as #1
 		M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-		P = glm::ortho(-4.0f, 4.0f, -3.0f, 3.0f, 1.0f, 100.0f);
+		P = glm::ortho(-2.4f, 2.4f, -1.8f, 1.8f, 1.0f, 50.0f);
 		V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		MV = V*M; 
 		MVP = P*V*M;
 		break;
 
 	case '4':
-		//#4 Model Transformation, Perspective Projection, Camera Transformation
-		M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
-		P = glm::perspective(glm::radians(20.0f), 4.0f / 3.0f, 1.0f, 100.0f);
-		V = glm::lookAt(glm::vec3(0.0f, 0.0f, 20.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f));
-		MVP = P*V*M;
-		break;
-
-	case '5':
-		//#5 Model Transformation, Perspective Projection, Camera Transformation
-		M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
-		P = glm::perspective(glm::radians(30.0f), 4.0f / 3.0f, 1.0f, 100.0f);
-		V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		MVP = P*V*M;
-		break;
-
-	case '6':
-		//#6 Model Transformation, Perspective Projection, Camera Transformation
+		//#4 Model Transformation, Perspective Projection, Camera Transformation, Same as #2
 		M = glm::rotate(M, glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
-		P = glm::perspective(glm::radians(70.0f), 4.0f / 3.0f, 1.0f, 100.0f);
+		P = glm::perspective(glm::radians(50.0f), 4.0f / 3.0f, 1.0f, 50.0f);
 		V = glm::lookAt(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		MV = V*M; 
 		MVP = P*V*M;
 		break;
 
@@ -353,30 +347,35 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		break;
 	}
 
-	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+	glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);
+	glUniformMatrix4fv(MVID, 1, GL_FALSE, &MV[0][0]);
 	glutPostRedisplay(); //request display() call ASAP
 }
 
-struct Light {
-	glm::vec3 direction;
-	glm::vec3 color;
-};
+//struct Light {
+//	glm::vec3 direction;
+//	glm::vec3 color;
+//};
 
 int main(int argc, char** argv) {
 
 	// Get vertices from Tris.txt file
 	string filename = "Tris1.txt";
 	int numTriangles = getNumTriangles(filename);
+
 	Vertex* allVertices;
 	allVertices = getAllVertices(filename);
 	int numVertices = numTriangles * 3;
-	printAllVertices(allVertices, numTriangles);
-	glm::vec3* vpositions;
-	vpositions = buildPositionsVec3s(allVertices, numVertices);
+	//printAllVertices(allVertices, numTriangles);
+
+	glm::vec4* vpositions;
+	vpositions = buildPositionsVec4s(allVertices, numVertices);
 	//printAllPositions(vpositions, numVertices);
-	glm::vec3* vnormals;
-	vnormals = buildNormalsVec3s(allVertices, numVertices);
+
+	glm::vec4* vnormals;
+	vnormals = buildNormalsVec4s(allVertices, numVertices);
 	printAllNormals(vnormals, numVertices);
+
 	glm::vec4* vcolors;
 	vcolors = buildColorsVec4s(allVertices, numVertices);
 	//printAllColors(vcolors, numVertices);
@@ -398,13 +397,9 @@ int main(int argc, char** argv) {
 	std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << endl;
 	std::cout << "GL Shading Language Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << "\n\n";
 
-	//Directional Lights
-
-
-
 	// Make a shader
 	char* vertexShaderSourceCode = readFile("vertexShader.vsh");
-	char* fragmentShaderSourceCode = readFile("fragmentShader.fsh");
+	char* fragmentShaderSourceCode = readFile("fragmentShader.vsh");
 	GLuint vertShaderID = makeVertexShader(vertexShaderSourceCode);
 	GLuint fragShaderID = makeFragmentShader(fragmentShaderSourceCode);
 	shaderProgramID = makeShaderProgram(vertShaderID, fragShaderID);
@@ -418,10 +413,11 @@ int main(int argc, char** argv) {
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	//GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec3) + NUM_VERTICES * sizeof(glm::vec4);
-	GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec3) +  NUM_VERTICES * sizeof(glm::vec4);
+	GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec4) + NUM_VERTICES * sizeof(glm::vec4) + NUM_VERTICES * sizeof(glm::vec4);
 	glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_STATIC_DRAW); //Create buffer
-	glBufferSubData(GL_ARRAY_BUFFER, 0, NUM_VERTICES * sizeof(glm::vec3), vpositions);  // Put data in buffer
-	glBufferSubData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec3), NUM_VERTICES * sizeof(glm::vec4), vcolors);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, NUM_VERTICES * sizeof(glm::vec4), vpositions);  // Put data in buffer
+	glBufferSubData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec4), NUM_VERTICES * sizeof(glm::vec4), vnormals);
+	glBufferSubData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec4) + NUM_VERTICES * sizeof(glm::vec4), NUM_VERTICES * sizeof(glm::vec4), vcolors);
 
 	glGenBuffers(1, &indexBufferID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
@@ -429,41 +425,48 @@ int main(int argc, char** argv) {
 
 	// Find the position of the variables in the shader
     positionID = glGetAttribLocation(shaderProgramID, "s_vPosition");
+	normalID = glGetAttribLocation(shaderProgramID, "s_vNormal");
 	colorID = glGetAttribLocation(shaderProgramID, "s_vColor");
 
-	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), BUFFER_OFFSET(NUM_VERTICES * sizeof(glm::vec3)));
+	glVertexAttribPointer(positionID, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(normalID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), BUFFER_OFFSET(NUM_VERTICES * sizeof(glm::vec4) + NUM_VERTICES * sizeof(glm::vec4)));
+	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), BUFFER_OFFSET(NUM_VERTICES * sizeof(glm::vec4) + NUM_VERTICES * sizeof(glm::vec4)));
 	glUseProgram(shaderProgramID);
 
 	// Start by showing view #1
-	glm::mat4 M = glm::mat4(1.0f);
-	glm::mat4 P = glm::ortho(-8.0f, 8.0f, -6.0f, 6.0f, 1.0f, 100.0f);
-	glm::mat4 V = glm::lookAt(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+	glm::mat4 P = glm::ortho(-2.4f, 2.4f, -1.8f, 1.8f, 1.0f, 50.0f);
+	glm::mat4 V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 MV = V*M;
 	glm::mat4 MVP = P*V*M;
 
-	GLuint MatrixID = glGetUniformLocation(shaderProgramID, "MVP");
-	glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
-	glm::vec3 light1direction = glm::vec3(0.0f, -1.0f, 0.0f);
-	glm::vec3 light1color = glm::vec3(1.0f, 0.1f, 0.1f);
-	GLuint light1d = glGetUniformLocation(shaderProgramID, "light1direction");
-	glUniform3fv(light1d, 1, glm::value_ptr(light1direction));	
-	GLuint light1c = glGetUniformLocation(shaderProgramID, "light1color");
-	glUniform3fv(light1c, 1, glm::value_ptr(light1color));
+	GLuint MVPID = glGetUniformLocation(shaderProgramID, "MVP");
+	glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);	
 	
-	glm::vec3 light2direction = glm::vec3(-1.0f, 0.0f, 0.0f);
-	glm::vec3 light2color = glm::vec3(0.1f, 1.0f, 0.1f);
-	GLuint light2d = glGetUniformLocation(shaderProgramID, "light2direction");
-	glUniform3fv(light2d, 1, glm::value_ptr(light2direction));
-	GLuint light2c = glGetUniformLocation(shaderProgramID, "light2color");
-	glUniform3fv(light2c, 1, glm::value_ptr(light2color));
+	GLuint MVID = glGetUniformLocation(shaderProgramID, "MV");
+	glUniformMatrix4fv(MVID, 1, GL_FALSE, &MV[0][0]);
 
-	glm::vec3 light3direction = glm::vec3(0.0f, 0.0f, -1.0f);
-	glm::vec3 light3color = glm::vec3(0.1f, 0.1f, 1.0f);
-	GLuint light3d = glGetUniformLocation(shaderProgramID, "light3direction");
-	glUniform3fv(light3d, 1, glm::value_ptr(light3direction));
-	GLuint light3c = glGetUniformLocation(shaderProgramID, "light3color");
-	glUniform3fv(light3c, 1, glm::value_ptr(light3color));
+	//Directional Lights
+	glm::vec4 light1direction = glm::vec4(0.0f, -1.0f, 0.0f, 1.0f);
+	glm::vec4 light1color = glm::vec4(1.0f, 0.1f, 0.1f, 1.0f);
+	GLuint light1d = glGetUniformLocation(shaderProgramID, "light1direction");
+	glUniform4fv(light1d, 1, glm::value_ptr(light1direction));	
+	GLuint light1c = glGetUniformLocation(shaderProgramID, "light1color");
+	glUniform4fv(light1c, 1, glm::value_ptr(light1color));
+	
+	//glm::vec3 light2direction = glm::vec3(-1.0f, 0.0f, 0.0f);
+	//glm::vec3 light2color = glm::vec3(0.1f, 1.0f, 0.1f);
+	//GLuint light2d = glGetUniformLocation(shaderProgramID, "light2direction");
+	//glUniform3fv(light2d, 1, glm::value_ptr(light2direction));
+	//GLuint light2c = glGetUniformLocation(shaderProgramID, "light2color");
+	//glUniform3fv(light2c, 1, glm::value_ptr(light2color));
+
+	//glm::vec3 light3direction = glm::vec3(0.0f, 0.0f, -1.0f);
+	//glm::vec3 light3color = glm::vec3(0.1f, 0.1f, 1.0f);
+	//GLuint light3d = glGetUniformLocation(shaderProgramID, "light3direction");
+	//glUniform3fv(light3d, 1, glm::value_ptr(light3direction));
+	//GLuint light3c = glGetUniformLocation(shaderProgramID, "light3color");
+	//glUniform3fv(light3c, 1, glm::value_ptr(light3color));
 
 	glutKeyboardFunc(switchMVP);
 
