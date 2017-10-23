@@ -168,22 +168,22 @@ void printAllVertices(Vertex* allVertices, int numTriangles)
 	}
 }
 
-glm::vec4* buildPositionsVec4s(Vertex* allVertices, int numVertices)
+glm::vec3* buildPositionsVec3s(Vertex* allVertices, int numVertices)
 {
-	glm::vec4* allPositions;
-	allPositions = new glm::vec4[numVertices];
+	glm::vec3* allPositions;
+	allPositions = new glm::vec3[numVertices];
 	for (int i = 0; i < numVertices; i++)
 	{
 		Vertex v;
 		v = allVertices[i];
-		allPositions[i] = glm::vec4(v.x, v.y, v.z, 1.0f);
+		allPositions[i] = glm::vec3(v.x, v.y, v.z);
 	}
 	return allPositions;
 }
 
-void printAllPositions(glm::vec4* allPositions, int numVertices)
+void printAllPositions(glm::vec3* allPositions, int numVertices)
 {
-	std::cout << "Printing all position vec4:\n";
+	std::cout << "Printing all position vec3:\n";
 	for (int i = 0; i < numVertices; i++)
 	{
 		if (i % 3 == 0)
@@ -192,26 +192,26 @@ void printAllPositions(glm::vec4* allPositions, int numVertices)
 		}
 		std::cout << "Position For Vertex " << i << ": ";
 		std::cout << allPositions[i][0] << " " << allPositions[i][1];
-		std::cout << " " << allPositions[i][2] << " " << allPositions[i][3] << endl;
+		std::cout << " " << allPositions[i][2] << endl;
 	}
 }
 
-glm::vec4* buildNormalsVec4s(Vertex* allVertices, int numVertices)
+glm::vec3* buildNormalsVec3s(Vertex* allVertices, int numVertices)
 {
-	glm::vec4* allNormals;
-	allNormals = new glm::vec4[numVertices];
+	glm::vec3* allNormals;
+	allNormals = new glm::vec3[numVertices];
 	for (int i = 0; i < numVertices; i++)
 	{
 		Vertex v;
 		v = allVertices[i];
-		allNormals[i] = glm::vec4(v.nx, v.ny, v.nz, 1.0f);
+		allNormals[i] = glm::vec3(v.nx, v.ny, v.nz);
 	}
 	return allNormals;
 }
 
-void printAllNormals(glm::vec4* allNormals, int numVertices)
+void printAllNormals(glm::vec3* allNormals, int numVertices)
 {
-	std::cout << "Printing all normals vec4:\n";
+	std::cout << "Printing all normals vec3:\n";
 	for (int i = 0; i < numVertices; i++)
 	{
 		if (i % 3 == 0)
@@ -220,7 +220,7 @@ void printAllNormals(glm::vec4* allNormals, int numVertices)
 		}
 		std::cout << "Normal For Vertex " << i << ": ";
 		std::cout << allNormals[i][0] << " " << allNormals[i][1];
-		std::cout << " " << allNormals[i][2] << " " << allNormals[i][3] << endl;
+		std::cout << " " << allNormals[i][2] << endl;
 	}
 }
 
@@ -368,13 +368,13 @@ int main(int argc, char** argv) {
 	int numVertices = numTriangles * 3;
 	//printAllVertices(allVertices, numTriangles);
 
-	glm::vec4* vpositions;
-	vpositions = buildPositionsVec4s(allVertices, numVertices);
+	glm::vec3* vpositions;
+	vpositions = buildPositionsVec3s(allVertices, numVertices);
 	//printAllPositions(vpositions, numVertices);
 
-	glm::vec4* vnormals;
-	vnormals = buildNormalsVec4s(allVertices, numVertices);
-	printAllNormals(vnormals, numVertices);
+	glm::vec3* vnormals;
+	vnormals = buildNormalsVec3s(allVertices, numVertices);
+	//printAllNormals(vnormals, numVertices);
 
 	glm::vec4* vcolors;
 	vcolors = buildColorsVec4s(allVertices, numVertices);
@@ -413,11 +413,11 @@ int main(int argc, char** argv) {
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	//GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec3) + NUM_VERTICES * sizeof(glm::vec4);
-	GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec4) + NUM_VERTICES * sizeof(glm::vec4) + NUM_VERTICES * sizeof(glm::vec4);
+	GLsizeiptr bufferSize = 2 * NUM_VERTICES * sizeof(glm::vec3) + NUM_VERTICES * sizeof(glm::vec4);
 	glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_STATIC_DRAW); //Create buffer
-	glBufferSubData(GL_ARRAY_BUFFER, 0, NUM_VERTICES * sizeof(glm::vec4), vpositions);  // Put data in buffer
-	glBufferSubData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec4), NUM_VERTICES * sizeof(glm::vec4), vnormals);
-	glBufferSubData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec4) + NUM_VERTICES * sizeof(glm::vec4), NUM_VERTICES * sizeof(glm::vec4), vcolors);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, NUM_VERTICES * sizeof(glm::vec3), vnormals);  // Put data in buffer
+	glBufferSubData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec3), NUM_VERTICES * sizeof(glm::vec3), vpositions);
+	glBufferSubData(GL_ARRAY_BUFFER, 2 * NUM_VERTICES * sizeof(glm::vec3), NUM_VERTICES * sizeof(glm::vec4), vcolors);
 
 	glGenBuffers(1, &indexBufferID);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
@@ -428,9 +428,9 @@ int main(int argc, char** argv) {
 	normalID = glGetAttribLocation(shaderProgramID, "s_vNormal");
 	colorID = glGetAttribLocation(shaderProgramID, "s_vColor");
 
-	glVertexAttribPointer(positionID, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(normalID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), BUFFER_OFFSET(NUM_VERTICES * sizeof(glm::vec4) + NUM_VERTICES * sizeof(glm::vec4)));
-	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), BUFFER_OFFSET(NUM_VERTICES * sizeof(glm::vec4) + NUM_VERTICES * sizeof(glm::vec4)));
+	glVertexAttribPointer(normalID, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
+	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(NUM_VERTICES * sizeof(glm::vec3)));
+	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), BUFFER_OFFSET(2 * NUM_VERTICES * sizeof(glm::vec3)));
 	glUseProgram(shaderProgramID);
 
 	// Start by showing view #1
@@ -447,26 +447,26 @@ int main(int argc, char** argv) {
 	glUniformMatrix4fv(MVID, 1, GL_FALSE, &MV[0][0]);
 
 	//Directional Lights
-	glm::vec4 light1direction = glm::vec4(0.0f, -1.0f, 0.0f, 1.0f);
-	glm::vec4 light1color = glm::vec4(1.0f, 0.1f, 0.1f, 1.0f);
+	glm::vec3 light1direction = glm::vec3(0.0f, -1.0f, 0.0f);
+	glm::vec3 light1color = glm::vec3(1.0f, 0.1f, 0.1f);
 	GLuint light1d = glGetUniformLocation(shaderProgramID, "light1direction");
-	glUniform4fv(light1d, 1, glm::value_ptr(light1direction));	
+	glUniform3fv(light1d, 1, glm::value_ptr(light1direction));	
 	GLuint light1c = glGetUniformLocation(shaderProgramID, "light1color");
-	glUniform4fv(light1c, 1, glm::value_ptr(light1color));
+	glUniform3fv(light1c, 1, glm::value_ptr(light1color));
 	
-	//glm::vec3 light2direction = glm::vec3(-1.0f, 0.0f, 0.0f);
-	//glm::vec3 light2color = glm::vec3(0.1f, 1.0f, 0.1f);
-	//GLuint light2d = glGetUniformLocation(shaderProgramID, "light2direction");
-	//glUniform3fv(light2d, 1, glm::value_ptr(light2direction));
-	//GLuint light2c = glGetUniformLocation(shaderProgramID, "light2color");
-	//glUniform3fv(light2c, 1, glm::value_ptr(light2color));
+	glm::vec3 light2direction = glm::vec3(-1.0f, 0.0f, 0.0f);
+	glm::vec3 light2color = glm::vec3(0.1f, 1.0f, 0.1f);
+	GLuint light2d = glGetUniformLocation(shaderProgramID, "light2direction");
+	glUniform3fv(light2d, 1, glm::value_ptr(light2direction));
+	GLuint light2c = glGetUniformLocation(shaderProgramID, "light2color");
+	glUniform3fv(light2c, 1, glm::value_ptr(light2color));
 
-	//glm::vec3 light3direction = glm::vec3(0.0f, 0.0f, -1.0f);
-	//glm::vec3 light3color = glm::vec3(0.1f, 0.1f, 1.0f);
-	//GLuint light3d = glGetUniformLocation(shaderProgramID, "light3direction");
-	//glUniform3fv(light3d, 1, glm::value_ptr(light3direction));
-	//GLuint light3c = glGetUniformLocation(shaderProgramID, "light3color");
-	//glUniform3fv(light3c, 1, glm::value_ptr(light3color));
+	glm::vec3 light3direction = glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 light3color = glm::vec3(0.1f, 0.1f, 1.0f);
+	GLuint light3d = glGetUniformLocation(shaderProgramID, "light3direction");
+	glUniform3fv(light3d, 1, glm::value_ptr(light3direction));
+	GLuint light3c = glGetUniformLocation(shaderProgramID, "light3color");
+	glUniform3fv(light3c, 1, glm::value_ptr(light3color));
 
 	glutKeyboardFunc(switchMVP);
 
