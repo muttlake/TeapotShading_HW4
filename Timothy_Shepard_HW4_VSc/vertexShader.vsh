@@ -3,6 +3,7 @@
 in vec3 s_vPosition;
 in vec4 s_vColor;
 in vec3 s_vNormal;
+in vec4 s_lvColor;
 
 uniform mat4 MVP;   // MVP Matrix
 uniform mat4 MV;    // Model View Matrix
@@ -20,13 +21,15 @@ out vec3 ld3;
 
 out vec4 objectColor;
 
+out vec4 lightedObjectColor;
+
 
 void main() {
 
 	//pass on to fragment shader
-	n = (MV * vec4(s_vNormal, 0.0f)).xyz;
+	n = (transpose(inverse(MV))* vec4(s_vNormal, 0.0f)).xyz;
 	n = normalize(n);
-	//n = s_vPosition;
+	//n = s_vNormal;
 
 	ld1 = -1 * (MV * vec4(light1direction, 0.0f)).xyz;
 	ld1 = normalize(ld1);
@@ -37,9 +40,11 @@ void main() {
 	ld3 = -1 * (MV * vec4(light3direction, 0.0f)).xyz;
 	ld3 = normalize(ld3);
 
-	v = (MV * vec4(s_vPosition, 0.0f)).xyz;
+	v = (MV * vec4(s_vPosition, 1.0f)).xyz;
 
 	objectColor = s_vColor;
+
+	lightedObjectColor = s_lvColor;
 
 	//set vertex position for display in openGL
 	gl_Position = MVP * vec4(s_vPosition, 1.0f);

@@ -9,6 +9,8 @@ in vec3 ld3;
 
 in vec4 objectColor;
 
+in vec4 lightedObjectColor;
+
 uniform vec3 light1color;
 uniform vec3 light2color;
 uniform vec3 light3color;
@@ -72,4 +74,5 @@ void main () {
 	//output color
 	//fColor = vec4(n, 1.0f);
 	fColor = outputColor;
+	//fColor = lightedObjectColor;
 }
