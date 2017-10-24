@@ -26,9 +26,6 @@
     <FxCompile Include="fragmentShader.vsh">
       <Filter>Source Files</Filter>
     </FxCompile>
-    <FxCompile Include="vertexShaderExample.vsh">
-      <Filter>Source Files</Filter>
-    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Tris1.txt">

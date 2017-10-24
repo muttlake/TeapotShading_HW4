@@ -25,22 +25,16 @@ const int NUM_INDICES = 2688;
 GLuint shaderProgramID;
 GLuint vao = 0;
 GLuint vbo;
-GLuint positionID, colorID, normalID, lightedColorID;
+GLuint vno;
+GLuint positionID, colorID, normalID;
 GLuint indexBufferID;
+GLuint positionBuffer, colorBuffer, normalBuffer;
 
 struct Vertex {
 	GLfloat x, y, z;
 	GLfloat nx, ny, nz;
 	GLfloat r, g, b, a;
 };
-
-glm::vec3 light1direction = glm::vec3(0.0f, -1.0f, 0.0f);
-glm::vec3 light1color = glm::vec3(1.0f, 0.1f, 0.1f);
-glm::vec3 light2direction = glm::vec3(-1.0f, 0.0f, 0.0f);
-glm::vec3 light2color = glm::vec3(0.1f, 1.0f, 0.1f);
-glm::vec3 light3direction = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 light3color = glm::vec3(0.1f, 0.1f, 1.0f);
-
 
 ///////////////////////////////////////////////////////////////
 // Read and Compile Shaders from tutorial
@@ -119,7 +113,7 @@ GLuint makeShaderProgram(GLuint vertexShaderID, GLuint fragmentShaderID) {
 ///////////////////////////////////////////////////////////////
 // Read File for Tris.txt
 ///////////////////////////////////////////////////////////////
-int getNumTriangles(string filename) 
+int getNumTriangles(string filename)
 {
 	ifstream inputFile;
 	inputFile.open(filename);
@@ -129,7 +123,7 @@ int getNumTriangles(string filename)
 	return numTriangles;
 }
 
-Vertex* getAllVertices(string filename) 
+Vertex* getAllVertices(string filename)
 {
 	ifstream inputFile;
 	inputFile.open(filename);
@@ -138,14 +132,14 @@ Vertex* getAllVertices(string filename)
 	inputFile >> numTriangles;
 
 	Vertex* allVertices;
-	allVertices = new Vertex[numTriangles*3];  // numVertices is numTriangles*3
+	allVertices = new Vertex[numTriangles * 3];  // numVertices is numTriangles*3
 
 	int currentIndex = 0;
 	while (!inputFile.eof())
 	{
 		string currentLine;
 		getline(inputFile, currentLine);
-		if (currentLine == "") { continue;}
+		if (currentLine == "") { continue; }
 		stringstream ss;
 		ss << currentLine;
 		Vertex newVertex;
@@ -166,7 +160,7 @@ void printAllVertices(Vertex* allVertices, int numTriangles)
 	std::cout << "Printing all vertices.\n";
 	for (int i = 0; i < numTriangles * 3; i++)
 	{
-		if (i % 3 == 0) {std::cout << "Triangle " << ++triangleCount << endl;}
+		if (i % 3 == 0) { std::cout << "Triangle " << ++triangleCount << endl; }
 		Vertex v;
 		v = allVertices[i];
 		std::cout << "Vertex: " << i << " ";
@@ -260,136 +254,7 @@ glm::vec4* buildColorsVec4s(Vertex* allVertices, int numVertices)
 	return allColors;
 }
 
-glm::vec4* buildLightedColorsVec4s(Vertex* allVertices, int numVertices, glm::mat4 M, glm::vec3 eyePosition)
-{
-	glm::vec4* lightedColors;
-	lightedColors = new glm::vec4[numVertices];
-	
-	std::cout << "Making lighted colors in glm\n";
-	std::cout << "Using matrix transform:\n";
-	std::cout << M[0][0] << " " << M[1][0] << " " << M[2][0] << " " << M[3][0] << endl;
-	std::cout << M[0][1] << " " << M[1][1] << " " << M[2][1] << " " << M[3][1] << endl;
-	std::cout << M[0][2] << " " << M[1][2] << " " << M[2][2] << " " << M[3][2] << endl;
-	std::cout << M[0][3] << " " << M[1][3] << " " << M[2][3] << " " << M[3][3] << endl;
-
-	glm::vec3 ld1 = light1direction;
-	glm::vec3 ld2 = light2direction;
-	glm::vec3 ld3 = light3direction;
-	glm::vec3 lc1 = light1color;
-	glm::vec3 lc2 = light2color;
-	glm::vec3 lc3 = light3color;
-	glm::vec3 ld1T = glm::vec3(M * glm::vec4(ld1, 1.0f));
-	glm::vec3 ld2T = glm::vec3(M * glm::vec4(ld2, 1.0f));
-	glm::vec3 ld3T = glm::vec3(M * glm::vec4(ld3, 1.0f));
-	glm::vec3 ld1Tn = glm::normalize(ld1T);
-	glm::vec3 ld2Tn = glm::normalize(ld2T);
-	glm::vec3 ld3Tn = glm::normalize(ld3T);
-
-	GLfloat Ka = 0.1f;
-	GLfloat Kd = 0.3f;
-	GLfloat Ks = 0.6f;
-	GLfloat s  = 3.0f;
-
-
-	for (int i = 0; i < numVertices; i++)
-	{
-		Vertex vertex;
-		vertex = allVertices[i];
-		glm::vec3 v = glm::vec3(vertex.x, vertex.y, vertex.z);
-		glm::vec4 objectColor = glm::vec4(vertex.r, vertex.g, vertex.b, vertex.a);
-		glm::vec3 n = glm::vec3(vertex.nx, vertex.ny, vertex.nz);
-
-
-		glm::vec3 vT = glm::vec3(M * glm::vec4(v, 1.0f));
-		glm::vec3 nT = glm::vec3(glm::transpose(glm::inverse(M)) * glm::vec4(n, 1.0f));
-
-		glm::vec3 e = eyePosition - vT;
-
-		glm::vec3 r1 = glm::reflect(-ld1T, nT);
-		glm::vec3 r2 = glm::reflect(-ld2T, nT);
-		glm::vec3 r3 = glm::reflect(-ld3T, nT);
-
-		glm::vec3 nTn = glm::normalize(nT);
-		glm::vec3 en = glm::normalize(e);
-		glm::vec3 r1n = glm::normalize(r1);
-		glm::vec3 r2n = glm::normalize(r2);
-		glm::vec3 r3n = glm::normalize(r3);
-
-		//specular
-		glm::vec3 spec1 = lc1 * glm::pow(glm::max(glm::dot(r1n, en), 0.0f), s);
-		glm::vec3 spec2 = lc2 * glm::pow(glm::max(glm::dot(r2n, en), 0.0f), s);
-		glm::vec3 spec3 = lc3 * glm::pow(glm::max(glm::dot(r3n, en), 0.0f), s);
-		glm::vec3 specular = Ks * (spec1 + spec2 + spec3);
-
-		//diffuse
-		glm::vec3 diff1 = lc1 * glm::max(glm::dot(nTn, ld1Tn), 0.0f);
-		glm::vec3 diff2 = lc2 * glm::max(glm::dot(nTn, ld2Tn), 0.0f);
-		glm::vec3 diff3 = lc3 * glm::max(glm::dot(nTn, ld3Tn), 0.0f);
-		glm::vec3 diffuse = Kd * (diff1 + diff2 + diff3);
-
-		//ambient
-		glm::vec3 amb1 = lc1;
-		glm::vec3 amb2 = lc2;
-		glm::vec3 amb3 = lc3;
-		glm::vec3 ambient = Ka * (amb1 + amb2 + amb3);
-
-		glm::vec3 color = specular + diffuse + ambient;
-		glm::vec4 outputColor = objectColor * glm::vec4(color, 1.0f);
-
-		if (i % 500 == 0) {
-			std::cout << "----------------------------------------------------------------------\n";
-			std::cout << endl << "v = " << v[0] << ", " << v[1] << ", " << v[2] << endl;
-			std::cout << "vT = " << vT[0] << ", " << vT[1] << ", " << vT[2] << endl;
-			std::cout << "n = " << n[0] << ", " << n[1] << ", " << n[2] << endl;
-			std::cout << "nT = " << nT[0] << ", " << nT[1] << ", " << nT[2] << endl;
-			std::cout << "nTn = " << nTn[0] << ", " << nTn[1] << ", " << nTn[2] << endl << endl;
-			std::cout << "ld1 = " << ld1[0] << ", " << ld1[1] << ", " << ld1[2] << endl;
-			std::cout << "ld1T = " << ld1T[0] << ", " << ld1T[1] << ", " << ld1T[2] << endl;
-			std::cout << "ld1Tn = " << ld1Tn[0] << ", " << ld1Tn[1] << ", " << ld1Tn[2] << endl;
-			std::cout << "ld2 = " << ld2[0] << ", " << ld2[1] << ", " << ld2[2] << endl;
-			std::cout << "ld2T = " << ld2T[0] << ", " << ld2T[1] << ", " << ld2T[2] << endl;
-			std::cout << "ld2Tn = " << ld2Tn[0] << ", " << ld2Tn[1] << ", " << ld2Tn[2] << endl;
-			std::cout << "ld3 = " << ld3[0] << ", " << ld3[1] << ", " << ld3[2] << endl;
-			std::cout << "ld3T = " << ld3T[0] << ", " << ld3T[1] << ", " << ld3T[2] << endl;
-			std::cout << "ld3Tn = " << ld3Tn[0] << ", " << ld3Tn[1] << ", " << ld3Tn[2] << endl << endl;
-			std::cout << "eyePosition = " << eyePosition[0] << ", " << eyePosition[1] << ", " << eyePosition[2] << endl;
-			std::cout << "e = " << e[0] << ", " << e[1] << ", " << e[2] << endl;
-			std::cout << "en = " << en[0] << ", " << en[1] << ", " << en[2] << endl << endl;
-			std::cout << "r1 = " << r1[0] << ", " << r1[1] << ", " << r1[2] << endl;
-			std::cout << "r1n = " << r1n[0] << ", " << r1n[1] << ", " << r1n[2] << endl;
-			std::cout << "r2 = " << r2[0] << ", " << r2[1] << ", " << r2[2] << endl;
-			std::cout << "r2n = " << r2n[0] << ", " << r2n[1] << ", " << r2n[2] << endl;
-			std::cout << "r3 = " << r3[0] << ", " << r3[1] << ", " << r3[2] << endl;
-			std::cout << "r3n = " << r3n[0] << ", " << r3n[1] << ", " << r3n[2] << endl << endl;
-			std::cout << "lc1 = " << lc1[0] << ", " << lc1[1] << ", " << lc1[2] << endl;
-			std::cout << "lc2 = " << lc2[0] << ", " << lc2[1] << ", " << lc2[2] << endl;
-			std::cout << "lc3 = " << lc3[0] << ", " << lc3[1] << ", " << lc3[2] << endl << endl;
-			std::cout << "Ks = " << Ks << " , s = " << s << endl;
-			std::cout << "spec1 = " << spec1[0] << ", " << spec1[1] << ", " << spec1[2] << endl;
-			std::cout << "spec2 = " << spec2[0] << ", " << spec2[1] << ", " << spec2[2] << endl;
-			std::cout << "spec3 = " << spec3[0] << ", " << spec3[1] << ", " << spec3[2] << endl;
-			std::cout << "specular = " << specular[0] << ", " << specular[1] << ", " << specular[2] << endl << endl;
-			std::cout << "Kd = " << Kd << endl;
-			std::cout << "diff1 = " << diff1[0] << ", " << diff1[1] << ", " << diff1[2] << endl;
-			std::cout << "diff2 = " << diff2[0] << ", " << diff2[1] << ", " << diff2[2] << endl;
-			std::cout << "diff3 = " << diff3[0] << ", " << diff3[1] << ", " << diff3[2] << endl;
-			std::cout << "diffuse = " << diffuse[0] << ", " << diffuse[1] << ", " << diffuse[2] << endl << endl;
-			std::cout << "Ka = " << Ka << endl;
-			std::cout << "amb1 = " << amb1[0] << ", " << amb1[1] << ", " << amb1[2] << endl;
-			std::cout << "amb2 = " << amb2[0] << ", " << amb2[1] << ", " << amb2[2] << endl;
-			std::cout << "amb3 = " << amb3[0] << ", " << amb3[1] << ", " << amb3[2] << endl;
-			std::cout << "ambient = " << ambient[0] << ", " << ambient[1] << ", " << ambient[2] << endl << endl;
-			std::cout << "color = " << color[0] << ", " << color[1] << ", " << color[2] << endl;
-			std::cout << "objectColor = " << objectColor[0] << ", " << objectColor[1] << ", " << objectColor[2] << ", " << objectColor[3] << endl;
-			std::cout << "outputColor = " << outputColor[0] << ", " << outputColor[1] << ", " << outputColor[2] << ", " << outputColor[3] << endl;
-		}
-
-		lightedColors[i] = outputColor;
-	}
-	return lightedColors;
-}
-
-GLuint* getTriangleIndicesArray(int numVertices) 
+GLuint* getTriangleIndicesArray(int numVertices)
 {
 	GLuint* triangleIndicesList;
 	triangleIndicesList = new GLuint[numVertices];
@@ -431,18 +296,13 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 {
 	GLuint MVPID = glGetUniformLocation(shaderProgramID, "MVP");
 	GLuint MVID = glGetUniformLocation(shaderProgramID, "MV");
-	GLuint MID = glGetUniformLocation(shaderProgramID, "M");
-	GLuint VID = glGetUniformLocation(shaderProgramID, "V");
-	
-	GLuint EYE = glGetUniformLocation(shaderProgramID, "eyePosition");
+
 
 	glm::mat4 M = glm::mat4(1.0f);
 	glm::mat4 P = glm::mat4(1.0f);
 	glm::mat4 V = glm::mat4(1.0f);
 	glm::mat4 MV = V*M;
 	glm::mat4 MVP = P*V*M;
-	glm::vec3 eyePosition = glm::vec3(1.0f);
-
 
 	switch (key) {
 	case '1':
@@ -450,8 +310,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		P = glm::ortho(-2.4f, 2.4f, -1.8f, 1.8f, 1.0f, 50.0f);
 		V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		eyePosition = glm::vec3(10.0f, 10.0f, 10.0f);
-		MV = V*M; 
+		MV = V*M;
 		MVP = P*V*M;
 		break;
 
@@ -461,8 +320,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
 		P = glm::perspective(glm::radians(50.0f), 4.0f / 3.0f, 1.0f, 50.0f);
 		V = glm::lookAt(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		eyePosition = glm::vec3(3.0f, 3.0f, 3.0f);
-		MV = V*M; 
+		MV = V*M;
 		MVP = P*V*M;
 		break;
 
@@ -471,8 +329,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 		P = glm::ortho(-2.4f, 2.4f, -1.8f, 1.8f, 1.0f, 50.0f);
 		V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		eyePosition = glm::vec3(10.0f, 10.0f, 10.0f);
-		MV = V*M; 
+		MV = V*M;
 		MVP = P*V*M;
 		break;
 
@@ -482,40 +339,9 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
 		P = glm::perspective(glm::radians(50.0f), 4.0f / 3.0f, 1.0f, 50.0f);
 		V = glm::lookAt(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		eyePosition = glm::vec3(3.0f, 3.0f, 3.0f);
 		MV = V*M;
 		MVP = P*V*M;
 		break;
-
-	//case '5':
-	//	//#5 Model Transformation, Perspective Projection, Camera Transformation, Same as #2
-	//	//#1 Orthographic Projection, Camera Transformation
-	//	P = glm::ortho(-8.0f, 8.0f, -6.0f, 6.0f, 1.0f, 100.0f);
-	//	V = glm::lookAt(glm::vec3(10.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	//	eyePosition = glm::vec3(10.0f, 0.0f, 0.0f);
-	//	MV = V*M;
-	//	MVP = P*V*M;
-	//	break;
-
-	//case '6':
-	//	//#5 Model Transformation, Perspective Projection, Camera Transformation, Same as #2
-	//	//#1 Orthographic Projection, Camera Transformation
-	//	P = glm::ortho(-8.0f, 8.0f, -6.0f, 6.0f, 1.0f, 100.0f);
-	//	V = glm::lookAt(glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	//	eyePosition = glm::vec3(0.0f, 10.0f, 0.0f);
-	//	MV = V*M;
-	//	MVP = P*V*M;
-	//	break;
-
-	//case '7':
-	//	//#5 Model Transformation, Perspective Projection, Camera Transformation, Same as #2
-	//	//#1 Orthographic Projection, Camera Transformation
-	//	P = glm::ortho(-8.0f, 8.0f, -6.0f, 6.0f, 1.0f, 100.0f);
-	//	V = glm::lookAt(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	//	eyePosition = glm::vec3(0.0f, 0.0f, 10.0f);
-	//	MV = V*M;
-	//	MVP = P*V*M;
-	//	break;
 
 	default:
 		//Default copy number 1
@@ -525,12 +351,13 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 
 	glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);
 	glUniformMatrix4fv(MVID, 1, GL_FALSE, &MV[0][0]);
-	glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
-	glUniformMatrix4fv(VID, 1, GL_FALSE, &V[0][0]);
-	glUniform3fv(EYE, 1, glm::value_ptr(eyePosition));
-
 	glutPostRedisplay(); //request display() call ASAP
 }
+
+//struct Light {
+//	glm::vec3 direction;
+//	glm::vec3 color;
+//};
 
 int main(int argc, char** argv) {
 
@@ -585,6 +412,41 @@ int main(int argc, char** argv) {
 	//glGenVertexArraysAPPLE(1, &vao);
 	//glBindVertexArrayAPPLE(vao);
 
+	glGenBuffers(1, &positionBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+	glBufferData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec3), vpositions, GL_STATIC_DRAW);
+	
+
+	glGenBuffers(1, &colorBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
+	glBufferData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec4), vcolors, GL_STATIC_DRAW);
+	
+
+	glGenBuffers(1, &normalBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
+	glBufferData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec3), vnormals, GL_STATIC_DRAW);
+	
+	
+	positionID = glGetAttribLocation(shaderProgramID, "s_vPosition");
+	glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
+
+	colorID = glGetAttribLocation(shaderProgramID, "s_vColor");
+	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
+	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), 0);
+
+	normalID = glGetAttribLocation(shaderProgramID, "s_vNormal");
+	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
+	glVertexAttribPointer(normalID, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
+
+	printAllNormals(vnormals, numVertices);
+
+	glGenBuffers(1, &indexBufferID);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, NUM_INDICES * sizeof(GLuint), vindices, GL_STATIC_DRAW); // Put indices in buffer as Gluint
+
+	//use shader program
+	glUseProgram(shaderProgramID);
 
 	// Start by showing view #1
 	glm::mat4 M = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
@@ -592,71 +454,30 @@ int main(int argc, char** argv) {
 	glm::mat4 V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 MV = V*M;
 	glm::mat4 MVP = P*V*M;
-	glm::vec3 eyePosition = glm::vec3(10.0f, 10.0f, 10.0f);
-	glm::vec4* lightedColors;
-	lightedColors = new glm::vec4[numVertices];
-	lightedColors = buildLightedColorsVec4s(allVertices, numVertices, MV, eyePosition);
-
-	printAllColors(lightedColors, numVertices);
-
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	//GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec3) + NUM_VERTICES * sizeof(glm::vec4);
-	GLsizeiptr bufferSize = 2 * NUM_VERTICES * sizeof(glm::vec3) + 2 * NUM_VERTICES * sizeof(glm::vec4);
-	glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_STATIC_DRAW); //Create buffer
-	glBufferSubData(GL_ARRAY_BUFFER, 0, NUM_VERTICES * sizeof(glm::vec3), vnormals);  // Put data in buffer
-	glBufferSubData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec3), NUM_VERTICES * sizeof(glm::vec3), vpositions);
-	glBufferSubData(GL_ARRAY_BUFFER, 2 * NUM_VERTICES * sizeof(glm::vec3), NUM_VERTICES * sizeof(glm::vec4), vcolors);
-	glBufferSubData(GL_ARRAY_BUFFER, 2 * NUM_VERTICES * sizeof(glm::vec3) + NUM_VERTICES * sizeof(glm::vec4), NUM_VERTICES * sizeof(glm::vec4), lightedColors);
-
-	glGenBuffers(1, &indexBufferID);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, NUM_INDICES * sizeof(GLuint), vindices, GL_STATIC_DRAW); // Put indices in buffer as Gluint
-
-	// Find the position of the variables in the shader
-    positionID = glGetAttribLocation(shaderProgramID, "s_vPosition");
-	normalID = glGetAttribLocation(shaderProgramID, "s_vNormal");
-	colorID = glGetAttribLocation(shaderProgramID, "s_vColor");
-	lightedColorID = glGetAttribLocation(shaderProgramID, "s_lvColor");
-
-	glVertexAttribPointer(normalID, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
-	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), BUFFER_OFFSET(NUM_VERTICES * sizeof(glm::vec3)));
-	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), BUFFER_OFFSET(2 * NUM_VERTICES * sizeof(glm::vec3)));
-	glVertexAttribPointer(lightedColorID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), BUFFER_OFFSET(2 * NUM_VERTICES * sizeof(glm::vec3) + NUM_VERTICES * sizeof(glm::vec4)));
-	glUseProgram(shaderProgramID);
-
-	GLuint EYE = glGetUniformLocation(shaderProgramID, "eyePosition");
-	glUniform3fv(EYE, 1, glm::value_ptr(eyePosition));
 
 	GLuint MVPID = glGetUniformLocation(shaderProgramID, "MVP");
-	glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);	
-	
+	glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);
+
 	GLuint MVID = glGetUniformLocation(shaderProgramID, "MV");
 	glUniformMatrix4fv(MVID, 1, GL_FALSE, &MV[0][0]);
 
-	GLuint MID = glGetUniformLocation(shaderProgramID, "M");
-	glUniformMatrix4fv(MID, 1, GL_FALSE, &M[0][0]);
-
-	GLuint VID = glGetUniformLocation(shaderProgramID, "V");
-	glUniformMatrix4fv(VID, 1, GL_FALSE, &V[0][0]);
-
 	//Directional Lights
-	light1direction = glm::vec3(0.0f, -1.0f, 0.0f);
-	light1color = glm::vec3(1.0f, 0.1f, 0.1f);
+	glm::vec3 light1direction = glm::vec3(0.0f, -1.0f, 0.0f);
+	glm::vec3 light1color = glm::vec3(1.0f, 0.1f, 0.1f);
 	GLuint light1d = glGetUniformLocation(shaderProgramID, "light1direction");
-	glUniform3fv(light1d, 1, glm::value_ptr(light1direction));	
+	glUniform3fv(light1d, 1, glm::value_ptr(light1direction));
 	GLuint light1c = glGetUniformLocation(shaderProgramID, "light1color");
 	glUniform3fv(light1c, 1, glm::value_ptr(light1color));
-	
-	light2direction = glm::vec3(-1.0f, 0.0f, 0.0f);
-	light2color = glm::vec3(0.1f, 1.0f, 0.1f);
+
+	glm::vec3 light2direction = glm::vec3(-1.0f, 0.0f, 0.0f);
+	glm::vec3 light2color = glm::vec3(0.1f, 1.0f, 0.1f);
 	GLuint light2d = glGetUniformLocation(shaderProgramID, "light2direction");
 	glUniform3fv(light2d, 1, glm::value_ptr(light2direction));
 	GLuint light2c = glGetUniformLocation(shaderProgramID, "light2color");
 	glUniform3fv(light2c, 1, glm::value_ptr(light2color));
 
-	light3direction = glm::vec3(0.0f, 0.0f, -1.0f);
-	light3color = glm::vec3(0.1f, 0.1f, 1.0f);
+	glm::vec3 light3direction = glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3 light3color = glm::vec3(0.1f, 0.1f, 1.0f);
 	GLuint light3d = glGetUniformLocation(shaderProgramID, "light3direction");
 	glUniform3fv(light3d, 1, glm::value_ptr(light3direction));
 	GLuint light3c = glGetUniformLocation(shaderProgramID, "light3color");
@@ -674,7 +495,25 @@ int main(int argc, char** argv) {
 	delete[] vpositions;
 	delete[] vnormals;
 	delete[] vcolors;
-	delete[] lightedColors;
 
 	return 0;
 }
+
+//glGenBuffers(1, &vbo);
+//glBindBuffer(GL_ARRAY_BUFFER, vbo);
+//GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec3) + NUM_VERTICES * sizeof(glm::vec4);
+//glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_STATIC_DRAW); //Create buffer
+//glBufferSubData(GL_ARRAY_BUFFER, 0, NUM_VERTICES * sizeof(glm::vec3), vpositions);  // Put data in buffer
+//glBufferSubData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec3), NUM_VERTICES * sizeof(glm::vec4), vcolors);
+
+//// Find the position of the variables in the shader
+//positionID = glGetAttribLocation(shaderProgramID, "s_vPosition");
+//colorID = glGetAttribLocation(shaderProgramID, "s_vColor");
+
+//glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 0, 0);
+//glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), BUFFER_OFFSET(NUM_VERTICES * sizeof(glm::vec3)));
+
+//glGenBuffers(1, &vno);
+//glBindBuffer(GL_NORMAL_ARRAY_BUFFER_BINDING, vno);
+//glBufferData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec3), vnormals, GL_STATIC_DRAW);
+//normalID = glGetAttribLocation(shaderProgramID, "s_vNormal");
