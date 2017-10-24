@@ -287,12 +287,14 @@ glm::vec4* buildLightedColorsVec4s(Vertex* allVertices, int numVertices, glm::ma
 	glm::vec4* lightedColors;
 	lightedColors = new glm::vec4[numVertices];
 
+	/*
 	std::cout << "Making lighted colors in glm\n";
 	std::cout << "Using matrix transform:\n";
 	std::cout << M[0][0] << " " << M[1][0] << " " << M[2][0] << " " << M[3][0] << endl;
 	std::cout << M[0][1] << " " << M[1][1] << " " << M[2][1] << " " << M[3][1] << endl;
 	std::cout << M[0][2] << " " << M[1][2] << " " << M[2][2] << " " << M[3][2] << endl;
 	std::cout << M[0][3] << " " << M[1][3] << " " << M[2][3] << " " << M[3][3] << endl;
+	*/
 
 	glm::vec3 ld1 = light1direction;
 	glm::vec3 ld2 = light2direction;
@@ -358,6 +360,7 @@ glm::vec4* buildLightedColorsVec4s(Vertex* allVertices, int numVertices, glm::ma
 		glm::vec3 color = specular + diffuse + ambient;
 		glm::vec4 outputColor = objectColor * glm::vec4(color, 1.0f);
 
+		/*
 		if (i % 1000 == 0) {
 			std::cout << "----------------------------------------------------------------------\n";
 			std::cout << endl << "v = " << v[0] << ", " << v[1] << ", " << v[2] << endl;
@@ -405,6 +408,7 @@ glm::vec4* buildLightedColorsVec4s(Vertex* allVertices, int numVertices, glm::ma
 			std::cout << "objectColor = " << objectColor[0] << ", " << objectColor[1] << ", " << objectColor[2] << ", " << objectColor[3] << endl;
 			std::cout << "outputColor = " << outputColor[0] << ", " << outputColor[1] << ", " << outputColor[2] << ", " << outputColor[3] << endl;
 		}
+		*/
 
 		lightedColors[i] = outputColor;
 	}
