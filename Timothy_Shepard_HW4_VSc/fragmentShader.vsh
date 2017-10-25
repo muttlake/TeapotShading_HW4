@@ -14,7 +14,7 @@ in vec3 lc1;
 in vec3 lc2;
 in vec3 lc3;
 
-in int shadingType;
+in vec3 shaderChooser;
 
 out vec4 fColor;
 
@@ -22,12 +22,16 @@ void main () {
 
 	vec4 outputColor = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-	//if (shadingType == 1)
-	//{
-	//	outputColor = gouraudColor;
-	//}
-	//else if (shadingType == 2)  // phong shading
-	//{
+	if (shaderChooser.x < 0.5f) //not important to shade lighting
+	{
+		outputColor = objectColor;
+	}
+	else if (shaderChooser.x < 1.5f) //gouraud shading
+	{
+		outputColor = gouraudColor;
+	}
+	else // phong shading
+	{
 		//eye vector
 		vec3 e = vec3(0, 0, 0) - v;
 		e = normalize(e);
@@ -75,17 +79,8 @@ void main () {
 		vec4 c = vec4((specular + diffuse + ambient), 1.0f);
 		outputColor = c * objectColor;
 
-	//}
-	//else
-	//{
-	//	outputColor = objectColor;
-	//}
-	//if (shadingType == 1)
-	//{
-		outputColor = gouraudColor;
-	//}
+	} // end of if statements
 
 	//output color
-	//fColor = vec4(n, 1.0f);
 	fColor = outputColor;
 }

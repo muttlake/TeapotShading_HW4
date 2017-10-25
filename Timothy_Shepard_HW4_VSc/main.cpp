@@ -26,7 +26,7 @@ GLuint shaderProgramID;
 GLuint vao = 0;
 GLuint vbo;
 GLuint vno;
-GLuint positionID, colorID, normalID, shadingTypeID;
+GLuint positionID, colorID, normalID;
 GLuint indexBufferID;
 GLuint positionBuffer, colorBuffer, normalBuffer;
 
@@ -297,10 +297,10 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 {
 	GLuint MVPID = glGetUniformLocation(shaderProgramID, "MVP");
 	GLuint MVID = glGetUniformLocation(shaderProgramID, "MV");
-	shadingTypeID = glGetUniformLocation(shaderProgramID, "s_vShadingType");
-
-	//set shadingType boolean
-	GLint shadingType = 0; // no lights
+	GLuint shaderCVID = glGetUniformLocation(shaderProgramID, "shaderChooserVec");
+	
+	//set shadingType boolean, Tried int but could not pass uniform
+	glm::vec3 shaderChooserVec = glm::vec3(0.0f, 0.0f, 0.0f);
 	
 	glm::mat4 M = glm::mat4(1.0f);
 	glm::mat4 P = glm::mat4(1.0f);
@@ -316,7 +316,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		MV = V*M;
 		MVP = P*V*M;
-		shadingType = 1;
+		shaderChooserVec = glm::vec3(1.0f, 1.0f, 1.0f);
 		break;
 
 	case '2':
@@ -327,7 +327,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		V = glm::lookAt(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		MV = V*M;
 		MVP = P*V*M;
-		shadingType = 1;
+		shaderChooserVec = glm::vec3(1.0f, 1.0f, 1.0f);
 		break;
 
 	case '3':
@@ -337,7 +337,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		V = glm::lookAt(glm::vec3(10.0f, 10.0f, 10.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		MV = V*M;
 		MVP = P*V*M;
-		shadingType = 2;
+		shaderChooserVec = glm::vec3(2.0f, 2.0f, 2.0f);
 		break;
 
 	case '4':
@@ -348,7 +348,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 		V = glm::lookAt(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		MV = V*M;
 		MVP = P*V*M;
-		shadingType = 2;
+		shaderChooserVec = glm::vec3(2.0f, 2.0f, 2.0f);
 		break;
 
 	default:
@@ -359,8 +359,7 @@ void switchMVP(unsigned char key, int xmouse, int ymouse)
 
 	glUniformMatrix4fv(MVPID, 1, GL_FALSE, &MVP[0][0]);
 	glUniformMatrix4fv(MVID, 1, GL_FALSE, &MV[0][0]);
-	cout << "shadingType value: " << shadingType << endl;
-	glUniform1i(shadingTypeID, shadingType);
+	glUniform3fv(shaderCVID, 1, glm::value_ptr(shaderChooserVec));
 	glutPostRedisplay(); //request display() call ASAP
 }
 
@@ -484,12 +483,10 @@ int main(int argc, char** argv) {
 	GLuint light3c = glGetUniformLocation(shaderProgramID, "light3color");
 	glUniform3fv(light3c, 1, glm::value_ptr(light3color));
 
-	//set shadingType boolean
-	GLint shadingType = 1;
-	shadingTypeID = glGetUniformLocation(shaderProgramID, "s_vShadingType");
-	glUniform1i(shadingTypeID, shadingType);
-
-	cout << "main shadingType value: " << shadingType << endl;
+	//set shadingType switch, Tried int but could not pass uniform
+	glm::vec3 shaderChooserVec = glm::vec3(1.0f, 1.0f, 1.0f);
+	GLuint shaderCVID = glGetUniformLocation(shaderProgramID, "shaderChooserVec");
+	glUniform3fv(shaderCVID, 1, glm::value_ptr(shaderChooserVec));
 
 	glutKeyboardFunc(switchMVP);
 
@@ -507,22 +504,3 @@ int main(int argc, char** argv) {
 
 	return 0;
 }
-
-//glGenBuffers(1, &vbo);
-//glBindBuffer(GL_ARRAY_BUFFER, vbo);
-//GLsizeiptr bufferSize = NUM_VERTICES * sizeof(glm::vec3) + NUM_VERTICES * sizeof(glm::vec4);
-//glBufferData(GL_ARRAY_BUFFER, bufferSize, NULL, GL_STATIC_DRAW); //Create buffer
-//glBufferSubData(GL_ARRAY_BUFFER, 0, NUM_VERTICES * sizeof(glm::vec3), vpositions);  // Put data in buffer
-//glBufferSubData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec3), NUM_VERTICES * sizeof(glm::vec4), vcolors);
-
-//// Find the position of the variables in the shader
-//positionID = glGetAttribLocation(shaderProgramID, "s_vPosition");
-//colorID = glGetAttribLocation(shaderProgramID, "s_vColor");
-
-//glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 0, 0);
-//glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), BUFFER_OFFSET(NUM_VERTICES * sizeof(glm::vec3)));
-
-//glGenBuffers(1, &vno);
-//glBindBuffer(GL_NORMAL_ARRAY_BUFFER_BINDING, vno);
-//glBufferData(GL_ARRAY_BUFFER, NUM_VERTICES * sizeof(glm::vec3), vnormals, GL_STATIC_DRAW);
-//normalID = glGetAttribLocation(shaderProgramID, "s_vNormal");

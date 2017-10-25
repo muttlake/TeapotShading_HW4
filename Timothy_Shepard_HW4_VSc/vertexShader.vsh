@@ -15,7 +15,7 @@ uniform vec3 light1color;
 uniform vec3 light2color;
 uniform vec3 light3color;
 
-uniform int s_vShadingType;
+uniform vec3 shaderChooserVec;
 
 out vec3 n;
 out vec3 v;
@@ -28,18 +28,17 @@ out vec3 lc1;
 out vec3 lc2;
 out vec3 lc3;
 
+out vec3 shaderChooser;
+
 out vec4 objectColor;
 out vec4 gouraudColor;
-
-out int shadingType;
 
 
 void main() {
 
-	shadingType = s_vShadingType;
+	shaderChooser = shaderChooserVec;  // gouraud = vec3(1.0f, 1.0f, 1.0f), phong = vec3(2.0f, 2.0f, 2.0f)
 
-	//For both phong and gouraud shading
-
+	//Always do for both phong and gouraud shading
 	//but pass on to fragment shader for phong shading
 	n = (transpose(inverse(MV))* vec4(s_vNormal, 0.0f)).xyz;
 	n = normalize(n);
@@ -62,7 +61,11 @@ void main() {
 	lc2 = light2color;
 	lc3 = light3color;
 
-	if (shadingType == 1) //gouraud shading
+	if (shaderChooser.x < 0.5f) // does not matter, do not show teapot
+	{
+		gouraudColor = objectColor;
+	}
+	else if (shaderChooser.x < 1.5f) //gouraud shading
 	{
 		//eye vector
 		vec3 e = vec3(0, 0, 0) - v;
